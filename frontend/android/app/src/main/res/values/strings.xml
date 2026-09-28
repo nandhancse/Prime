@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">PRime</string>
+    <string name="title_activity_main">PRime</string>
+    <string name="package_name">com.prime.workout</string>
+    <string name="custom_url_scheme">com.prime.workout</string>
+</resources>

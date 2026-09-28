@@ -1,0 +1,4 @@
+storeFile=prime-release-key.jks
+storePassword=
+keyAlias=prime
+keyPassword=

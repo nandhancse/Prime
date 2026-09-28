@@ -51,7 +51,11 @@ function WorkoutHubPage() {
       <PageHeader title="Workout" />
       <ErrorMessage message={error} onRetry={load} />
       {!program ? (
-        <EmptyState title="No active program." message="Create or activate one to start." />
+        <EmptyState title="No active program" message="Set up a program once, then starting a workout is one tap.">
+          <button className="button button-primary" type="button" onClick={() => navigate('/programs/new')}>
+            Build my program
+          </button>
+        </EmptyState>
       ) : (
         <section className="simple-stack">
           <h2>{program.name}</h2>

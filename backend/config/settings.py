@@ -23,7 +23,7 @@ def env_list(name, default=''):
     return [value.strip() for value in os.environ.get(name, default).split(',') if value.strip()]
 
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
+# Build paths inside the project like this: BASE_DIR / 'subdir'
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
@@ -44,6 +44,11 @@ ALLOWED_HOSTS = env_list(
     'ALLOWED_HOSTS',
     'localhost,127.0.0.1' if DEBUG else '',
 )
+
+# Always include Railway's internal private domain for health checks
+railway_private_domain = os.environ.get('RAILWAY_PRIVATE_DOMAIN', '').strip()
+if railway_private_domain:
+    ALLOWED_HOSTS.append(railway_private_domain)
 
 
 # Application definition
@@ -193,3 +198,4 @@ GOOGLE_CLIENT_IDS = tuple(filter(None, [
     os.environ.get('GOOGLE_WEB_CLIENT_ID', '').strip(),
     os.environ.get('GOOGLE_ANDROID_CLIENT_ID', '').strip(),
 ]))
+

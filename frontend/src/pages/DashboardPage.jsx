@@ -43,7 +43,7 @@ function DashboardPage() {
       return
     }
     if (!nextDay) {
-      navigate('/programs')
+      navigate(data?.active_program ? '/programs' : '/programs/new')
       return
     }
     setStarting(true)
@@ -64,6 +64,7 @@ function DashboardPage() {
   const weeklyTarget = summary?.weekly_workout_target || 1
   const weeklyDone = summary?.weekly_workouts_completed || 0
   const progress = Math.min(100, (weeklyDone / weeklyTarget) * 100)
+  const needsProgramSetup = !data?.active_program
 
   return (
     <main className="app-page home-page">
@@ -75,8 +76,22 @@ function DashboardPage() {
       <ErrorMessage message={error} onRetry={load} />
 
       <button className="home-primary-action" type="button" onClick={start} disabled={starting}>
-        <span>{data?.active_workout ? 'Workout in progress' : nextDay?.name || 'Your next session'}</span>
-        <strong>{starting ? 'Starting...' : data?.active_workout ? 'Resume Workout' : 'Start Workout'}</strong>
+        <span>
+          {data?.active_workout
+            ? 'Workout in progress'
+            : needsProgramSetup
+              ? 'First-time setup'
+              : nextDay?.name || 'Choose your next session'}
+        </span>
+        <strong>
+          {starting
+            ? 'Starting...'
+            : data?.active_workout
+              ? 'Resume workout'
+              : needsProgramSetup
+                ? 'Build your program'
+                : 'Start workout'}
+        </strong>
       </button>
 
       {nextDay && !data?.active_workout && (

@@ -7,15 +7,17 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 
-  --background: #0c0f0d;
-  --surface: #141815;
-  --text-primary: #f4f6f1;
-  --text-secondary: #a9b0a9;
-  --text-muted: #747b75;
-  --accent: #c1ff3d;
-  --accent-bright: #d0ff6c;
-  --border: rgba(255, 255, 255, 0.09);
-  --border-strong: rgba(255, 255, 255, 0.2);
+  --background: #090c0a;
+  --surface: #111612;
+  --surface-raised: #171d18;
+  --surface-soft: #0d110e;
+  --text-primary: #f4f7f2;
+  --text-secondary: #a7b0a9;
+  --text-muted: #7c877f;
+  --accent: #c5ff42;
+  --accent-bright: #d4ff72;
+  --border: rgba(255, 255, 255, 0.075);
+  --border-strong: rgba(255, 255, 255, 0.15);
   --danger: #ff6b6b;
   --danger-light: #ff9b9b;
   --warning: #f5c451;
@@ -35,11 +37,7 @@ body {
   min-width: 320px;
   min-height: 100vh;
   margin: 0;
-  background:
-    linear-gradient(rgba(255, 255, 255, 0.012) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.012) 1px, transparent 1px),
-    var(--background);
-  background-size: 48px 48px;
+  background: var(--background);
 }
 
 button,

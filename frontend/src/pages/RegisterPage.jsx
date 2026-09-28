@@ -7,6 +7,8 @@ import { useAuth } from '../context/useAuth.js'
 import '../styles/auth.css'
 
 
+const googleEnabled = Boolean(import.meta.env.VITE_GOOGLE_CLIENT_ID?.trim())
+
 const initialFormData = {
   username: '',
   password: '',
@@ -79,8 +81,16 @@ function RegisterPage() {
     <div className="auth-page">
       <main className="auth-main">
         <section className="auth-card" aria-labelledby="register-heading">
-          <Link className="auth-brand" to="/">PRime</Link>
-          <h1 className="auth-title" id="register-heading">Create account</h1>
+          <Link className="auth-brand" to="/" aria-label="PRime home">
+            <span className="auth-brand-mark" aria-hidden="true">P</span>
+            <span>PRime</span>
+          </Link>
+
+          <div className="auth-copy">
+            <p className="auth-kicker">Start simple</p>
+            <h1 className="auth-title" id="register-heading">Create your account.</h1>
+            <p className="auth-subtitle">No profile forms. Just the basics — you can set up training next.</p>
+          </div>
 
           {errors.form && (
             <p className="form-message error" role="alert">{errors.form}</p>
@@ -96,6 +106,7 @@ function RegisterPage() {
               onChange={handleChange}
               error={errors.username}
               autoComplete="username"
+              autoCapitalize="none"
               required
             />
             <FormInput
@@ -128,11 +139,15 @@ function RegisterPage() {
             </button>
           </form>
 
-          <div className="auth-divider"><span>OR</span></div>
-          <GoogleLoginButton onError={(message) => setErrors((current) => ({ ...current, form: message }))} />
+          {googleEnabled && (
+            <div className="auth-social">
+              <div className="auth-divider"><span>or</span></div>
+              <GoogleLoginButton onError={(message) => setErrors((current) => ({ ...current, form: message }))} />
+            </div>
+          )}
 
           <p className="auth-switch">
-            Already have an account? <Link to="/login">Login</Link>
+            Already have an account? <Link to="/login">Sign in</Link>
           </p>
         </section>
       </main>

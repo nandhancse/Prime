@@ -43,12 +43,12 @@ function LoginPage() {
     setErrors({})
 
     try {
-      await login({
+      const profile = await login({
         username: formData.username.trim(),
         password: formData.password,
       })
       const destination = location.state?.from?.pathname || '/dashboard'
-      navigate(destination, { replace: true })
+      navigate(profile.onboarding_completed ? destination : '/onboarding', { replace: true })
     } catch (error) {
       setErrors(getApiErrors(error, 'Unable to log in. Please try again.'))
     } finally {

@@ -62,14 +62,11 @@ function RegisterPage() {
     setErrors({})
 
     try {
-      const response = await register({
+      await register({
         ...formData,
         username: formData.username.trim(),
       })
-      navigate('/login', {
-        replace: true,
-        state: { message: response.message },
-      })
+      navigate('/onboarding', { replace: true })
     } catch (error) {
       setErrors(getApiErrors(error, 'Unable to create your account. Please try again.'))
     } finally {

@@ -123,7 +123,7 @@ function OnboardingPage() {
     <main className="onboarding-page">
       <section className="onboarding-shell">
         <header className="onboarding-brand-row">
-          <div className="onboarding-brand"><span>P</span><strong>PRime</strong></div>
+          <div className="onboarding-brand"><span>R</span><strong>PRime</strong></div>
           <span className="onboarding-step-count">Step {step} of {steps.length}</span>
         </header>
 

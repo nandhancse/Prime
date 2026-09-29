@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <path
+        android:fillColor="#0B0E0B"
+        android:pathData="M0,0H108V108H0Z" />
+
+    <!-- Metallic left stroke of the PRime R mark -->
+    <path
+        android:fillColor="#E5E8E4"
+        android:pathData="M18,27H66L58,39H30L24,48H57L48,60H38L25,82H15L35,49H18Z" />
+
+    <!-- PRime lime loop and leg -->
+    <path
+        android:fillColor="#C5FF42"
+        android:pathData="M58,20H78C89,20 96,27 96,38C96,48 89,56 77,56H66L89,86H72L49,55H64C76,55 82,49 82,40C82,34 78,31 71,31H58Z" />
+
+    <!-- Dark cutout that sharpens the R loop -->
+    <path
+        android:fillColor="#0B0E0B"
+        android:pathData="M55,34H70C77,34 80,37 80,41C80,46 76,49 69,49H45L52,39H67C70,39 72,38 72,36C72,35 70,34 67,34Z" />
+</vector>

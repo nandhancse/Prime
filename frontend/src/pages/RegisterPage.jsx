@@ -79,7 +79,7 @@ function RegisterPage() {
       <main className="auth-main">
         <section className="auth-card" aria-labelledby="register-heading">
           <Link className="auth-brand" to="/" aria-label="PRime home">
-            <span className="auth-brand-mark" aria-hidden="true">P</span>
+            <span className="auth-brand-mark" aria-hidden="true">R</span>
             <span>PRime</span>
           </Link>
 

@@ -55,7 +55,7 @@ jobs:
         run: |
           set -euo pipefail
           STORE_PASS="$(openssl rand -hex 24)"
-          KEY_PASS="$(openssl rand -hex 24)"
+          KEY_PASS="$STORE_PASS"
           KEY_ALIAS="prime"
           keytool -genkeypair -v             -keystore prime-release-key.jks             -storepass "$STORE_PASS"             -keypass "$KEY_PASS"             -keyalg RSA             -keysize 2048             -validity 10000             -alias "$KEY_ALIAS"             -dname "CN=PRime, OU=PRime, O=PRime, L=Kottayam, ST=Kerala, C=IN"
 
@@ -88,7 +88,9 @@ jobs:
 
       - name: Build signed release APK
         working-directory: frontend/android
-        run: ./gradlew assembleRelease
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleRelease
 
       - name: Verify APK signature
         working-directory: frontend/android

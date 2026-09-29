@@ -2,6 +2,7 @@ from rest_framework import status
 from rest_framework.generics import GenericAPIView, RetrieveUpdateAPIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
+from rest_framework_simplejwt.tokens import RefreshToken
 
 from .models import UserProfile
 from .serializers import (
@@ -21,10 +22,14 @@ class RegisterView(GenericAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
+        UserProfile.objects.get_or_create(user=user)
+        refresh = RefreshToken.for_user(user)
 
         return Response(
             {
                 'message': 'Account created successfully',
+                'access': str(refresh.access_token),
+                'refresh': str(refresh),
                 'user': UserSerializer(user).data,
             },
             status=status.HTTP_201_CREATED,

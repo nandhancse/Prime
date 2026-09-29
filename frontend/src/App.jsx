@@ -14,6 +14,7 @@ import ProgramDetailPage from './pages/ProgramDetailPage.jsx'
 import ProgramsPage from './pages/ProgramsPage.jsx'
 import RegisterPage from './pages/RegisterPage.jsx'
 import MorePage from './pages/MorePage.jsx'
+import OnboardingPage from './pages/OnboardingPage.jsx'
 import ProfilePage from './pages/ProfilePage.jsx'
 import ProgressPage from './pages/ProgressPage.jsx'
 import RecordsPage from './pages/RecordsPage.jsx'
@@ -32,6 +33,7 @@ function App() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route path="/onboarding" element={<ProtectedRoute><OnboardingPage /></ProtectedRoute>} />
         <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/workout" element={<WorkoutHubPage />} />

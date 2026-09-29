@@ -40,4 +40,3 @@ class Migration(migrations.Migration):
         ),
         migrations.RunPython(mark_existing_profiles_complete, migrations.RunPython.noop),
     ]
-}

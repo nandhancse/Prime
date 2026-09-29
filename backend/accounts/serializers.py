@@ -54,6 +54,9 @@ class UserProfileSerializer(serializers.ModelSerializer):
             'primary_fitness_goal',
             'primary_fitness_goal_display',
             'weekly_workout_target',
+            'current_training_split',
+            'custom_training_split',
+            'onboarding_completed',
             'preferred_weight_unit',
             'preferred_weight_unit_display',
             'default_rest_seconds',
@@ -64,6 +67,46 @@ class UserProfileSerializer(serializers.ModelSerializer):
             'updated_at',
         ]
         read_only_fields = ['created_at', 'updated_at']
+
+    def validate(self, attrs):
+        completing = attrs.get(
+            'onboarding_completed',
+            getattr(self.instance, 'onboarding_completed', False),
+        )
+        split = attrs.get(
+            'current_training_split',
+            getattr(self.instance, 'current_training_split', UserProfile.TrainingSplit.NONE),
+        )
+        custom_split = attrs.get(
+            'custom_training_split',
+            getattr(self.instance, 'custom_training_split', ''),
+        )
+
+        if split == UserProfile.TrainingSplit.CUSTOM and not str(custom_split).strip():
+            raise serializers.ValidationError(
+                {'custom_training_split': 'Enter the name of your current split.'}
+            )
+
+        if completing:
+            required = {
+                'display_name': attrs.get('display_name', getattr(self.instance, 'display_name', '')),
+                'height_cm': attrs.get('height_cm', getattr(self.instance, 'height_cm', None)),
+                'current_weight_kg': attrs.get(
+                    'current_weight_kg',
+                    getattr(self.instance, 'current_weight_kg', None),
+                ),
+            }
+            missing = [key for key, value in required.items() if value in ('', None)]
+            if missing:
+                raise serializers.ValidationError({
+                    key: 'Complete this field before finishing setup.'
+                    for key in missing
+                })
+
+        if split != UserProfile.TrainingSplit.CUSTOM:
+            attrs['custom_training_split'] = ''
+
+        return attrs
 
 
 class RegisterSerializer(serializers.ModelSerializer):

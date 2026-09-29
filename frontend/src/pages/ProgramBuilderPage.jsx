@@ -1,3 +1,4 @@
+import { ArrowLeft, ArrowRight, Check, Plus } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { getExercises } from '../api/exercises.js'
@@ -15,6 +16,29 @@ const initialProgram = {
   is_active: false,
   days: [],
 }
+
+const steps = [
+  {
+    label: 'Basics',
+    title: 'Name your program',
+    description: 'Give the plan a clear name and a short note so it is easy to recognize later.',
+  },
+  {
+    label: 'Schedule',
+    title: 'Plan your training week',
+    description: 'Add your workout days, choose when they happen, and include rest days if you want them visible.',
+  },
+  {
+    label: 'Exercises',
+    title: 'Build each workout',
+    description: 'Choose the exercises for every training day, then set your targets. You can fine-tune weight and rest time later.',
+  },
+  {
+    label: 'Review',
+    title: 'Review and finish',
+    description: 'Check the structure once, choose whether to make it active, and save when it looks right.',
+  },
+]
 
 function normalizeProgram(program) {
   return {
@@ -41,6 +65,7 @@ function ProgramBuilderPage() {
   const [error, setError] = useState('')
   const [step, setStep] = useState(1)
   const navigate = useNavigate()
+  const currentStep = steps[step - 1]
 
   useEffect(() => {
     let active = true
@@ -184,85 +209,257 @@ function ProgramBuilderPage() {
 
   function nextStep() {
     if (step === 1 && !program.name.trim()) {
-      setError('Program name is required.')
+      setError('Give your program a name before continuing.')
       return
     }
     if (step === 2 && (program.days.length === 0 || program.days.some((day) => !day.name.trim()))) {
-      setError('Add and name at least one day.')
+      setError('Add and name at least one day before continuing.')
       return
+    }
+    if (step === 3) {
+      const validationError = validateProgram()
+      if (validationError) {
+        setError(validationError)
+        return
+      }
     }
     setError('')
     setStep((current) => Math.min(4, current + 1))
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  function previousStep() {
+    setError('')
+    setStep((current) => Math.max(1, current - 1))
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  function goBackToStep(targetStep) {
+    if (targetStep >= step) return
+    setError('')
+    setStep(targetStep)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   if (loading) return <main className="app-page"><LoadingSpinner label="Loading program builder..." /></main>
 
   return (
-    <main className="app-page">
+    <main className="app-page builder-page">
       <PageHeader
-        title={editing ? 'Edit program' : 'New program'}
-        actions={<Link className="button button-secondary" to={editing ? `/programs/${programId}` : '/programs'}>Cancel</Link>}
+        eyebrow={editing ? 'Program editor' : 'Program setup'}
+        title={editing ? 'Edit program' : 'Build your program'}
+        description={editing ? 'Make changes without losing the structure you already built.' : 'A short guided setup. You can change everything later.'}
+        actions={<Link className="button button-secondary button-small" to={editing ? `/programs/${programId}` : '/programs'}>Cancel</Link>}
       />
 
       <ErrorMessage message={error} />
 
       <form className="program-builder" onSubmit={(event) => event.preventDefault()} noValidate>
-        <div className="builder-steps" aria-label="Program builder steps">
-          {['Program', 'Days', 'Exercises', 'Save'].map((label, index) => <button className={step === index + 1 ? 'active' : ''} type="button" key={label} onClick={() => index + 1 < step && setStep(index + 1)}><span>{index + 1}</span>{label}</button>)}
-        </div>
-
-        {step === 1 && <section className="builder-card program-basics">
-          <label>
-            <span>Program name</span>
-            <input value={program.name} onChange={(event) => setProgram((current) => ({ ...current, name: event.target.value }))} placeholder="Push Pull Legs" />
-          </label>
-          <label>
-            <span>Description <small>Optional</small></span>
-            <textarea rows="3" value={program.description} onChange={(event) => setProgram((current) => ({ ...current, description: event.target.value }))} />
-          </label>
-        </section>}
-
-        {step === 2 && <section className="builder-card">
-          <div className="builder-section-heading"><h2>Days</h2><button className="button button-secondary button-small" type="button" onClick={addDay}>+ Add Day</button></div>
-          {program.days.length === 0 && <button className="add-day-empty" type="button" onClick={addDay}><strong>Add your first day</strong></button>}
-          <div className="day-setup-list">
-            {program.days.map((day, index) => <article key={day.localId || day.id}>
-              <label><span>Day name</span><input value={day.name} onChange={(event) => updateDay(index, { ...day, name: event.target.value })} placeholder="Push" /></label>
-              <label><span>Schedule</span><select value={day.day_of_week} onChange={(event) => updateDay(index, { ...day, day_of_week: event.target.value })}>{['flexible', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].map((value) => <option key={value} value={value}>{value[0].toUpperCase() + value.slice(1)}</option>)}</select></label>
-              <label className="switch-row"><span>Rest day</span><input type="checkbox" checked={day.is_rest_day} disabled={day.exercises.length > 0} onChange={(event) => updateDay(index, { ...day, is_rest_day: event.target.checked })} /></label>
-              <div className="reorder-actions"><button type="button" disabled={index === 0} onClick={() => moveDay(index, -1)}>Up</button><button type="button" disabled={index === program.days.length - 1} onClick={() => moveDay(index, 1)}>Down</button><button className="danger" type="button" onClick={() => removeDay(index)}>Remove</button></div>
-            </article>)}
+        <nav className="builder-progress" aria-label="Program builder progress">
+          <div className="builder-progress-copy">
+            <span>Step {step} of {steps.length}</span>
+            <strong>{currentStep.label}</strong>
           </div>
-        </section>}
+          <div className="builder-progress-track">
+            {steps.map((item, index) => {
+              const number = index + 1
+              const state = number === step ? 'current' : number < step ? 'complete' : ''
+              return (
+                <button
+                  aria-current={number === step ? 'step' : undefined}
+                  aria-label={`Step ${number}: ${item.label}`}
+                  className={state}
+                  disabled={number > step}
+                  key={item.label}
+                  onClick={() => goBackToStep(number)}
+                  type="button"
+                >
+                  {number < step ? <Check size={14} strokeWidth={2.6} /> : number}
+                </button>
+              )
+            })}
+          </div>
+        </nav>
 
-        {step === 3 && <div className="program-days-stack">
-          {program.days.map((day, index) => (
-            <ProgramDayCard
-              key={day.localId || day.id}
-              day={day}
-              index={index}
-              totalDays={program.days.length}
-              exerciseLibrary={exerciseLibrary}
-              onChange={(nextDay) => updateDay(index, nextDay)}
-              onMove={moveDay}
-              onRemove={removeDay}
-            />
-          ))}
-        </div>}
+        <section className="builder-stage" aria-labelledby="builder-stage-title">
+          <header className="builder-stage-header">
+            <span>{currentStep.label}</span>
+            <h2 id="builder-stage-title">{currentStep.title}</h2>
+            <p>{currentStep.description}</p>
+          </header>
 
-        {step === 4 && <section className="builder-card builder-review">
-          <h2>{program.name}</h2>
-          <p>{program.days.length} days</p>
-          {program.days.map((day) => <div key={day.localId || day.id}><strong>{day.name}</strong><span>{day.is_rest_day ? 'Rest' : `${day.exercises.length} exercises`}</span></div>)}
-          <label className="switch-row">
-            <span>Make active</span>
-            <input type="checkbox" checked={program.is_active} onChange={(event) => setProgram((current) => ({ ...current, is_active: event.target.checked }))} />
-          </label>
-        </section>}
+          {step === 1 && (
+            <div className="builder-card program-basics">
+              <label>
+                <span>Program name</span>
+                <input
+                  autoFocus
+                  value={program.name}
+                  onChange={(event) => setProgram((current) => ({ ...current, name: event.target.value }))}
+                  placeholder="Upper / Lower 4 Day"
+                />
+              </label>
+              <label>
+                <span>Description <small>Optional</small></span>
+                <textarea
+                  rows="3"
+                  value={program.description}
+                  onChange={(event) => setProgram((current) => ({ ...current, description: event.target.value }))}
+                  placeholder="Strength-focused plan for the next 8 weeks"
+                />
+              </label>
+              <div className="builder-tip">
+                <strong>Keep it obvious.</strong>
+                <span>Use a name you will recognize instantly when you are at the gym.</span>
+              </div>
+            </div>
+          )}
+
+          {step === 2 && (
+            <div className="builder-card">
+              <div className="builder-section-heading">
+                <div>
+                  <h3>Your week</h3>
+                  <p>{program.days.length ? `${program.days.length} day${program.days.length === 1 ? '' : 's'} added` : 'Nothing added yet'}</p>
+                </div>
+                <button className="button button-secondary button-small" type="button" onClick={addDay}>
+                  <Plus size={17} /> Add day
+                </button>
+              </div>
+
+              {program.days.length === 0 && (
+                <button className="add-day-empty" type="button" onClick={addDay}>
+                  <Plus size={22} />
+                  <strong>Add your first workout day</strong>
+                  <span>Give it a name like Push, Pull, Legs, Upper, or Full Body.</span>
+                </button>
+              )}
+
+              <div className="day-setup-list">
+                {program.days.map((day, index) => (
+                  <article key={day.localId || day.id}>
+                    <div className="day-card-top">
+                      <span className="day-number">{index + 1}</span>
+                      <div>
+                        <strong>{day.name || 'Untitled day'}</strong>
+                        <small>{day.is_rest_day ? 'Rest day' : 'Workout day'}</small>
+                      </div>
+                    </div>
+                    <label>
+                      <span>Day name</span>
+                      <input
+                        value={day.name}
+                        onChange={(event) => updateDay(index, { ...day, name: event.target.value })}
+                        placeholder="Push"
+                      />
+                    </label>
+                    <label>
+                      <span>Schedule</span>
+                      <select
+                        value={day.day_of_week}
+                        onChange={(event) => updateDay(index, { ...day, day_of_week: event.target.value })}
+                      >
+                        {['flexible', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].map((value) => (
+                          <option key={value} value={value}>{value[0].toUpperCase() + value.slice(1)}</option>
+                        ))}
+                      </select>
+                    </label>
+                    <label className="switch-row compact-switch">
+                      <span>
+                        <strong>Rest day</strong>
+                        <small>No exercises will be added to this day.</small>
+                      </span>
+                      <input
+                        type="checkbox"
+                        checked={day.is_rest_day}
+                        disabled={day.exercises.length > 0}
+                        onChange={(event) => updateDay(index, { ...day, is_rest_day: event.target.checked })}
+                      />
+                    </label>
+                    <div className="reorder-actions">
+                      <button type="button" disabled={index === 0} onClick={() => moveDay(index, -1)}>Move up</button>
+                      <button type="button" disabled={index === program.days.length - 1} onClick={() => moveDay(index, 1)}>Move down</button>
+                      <button className="danger" type="button" onClick={() => removeDay(index)}>Remove</button>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {step === 3 && (
+            <div className="program-days-stack">
+              {program.days.map((day, index) => (
+                <ProgramDayCard
+                  key={day.localId || day.id}
+                  day={day}
+                  index={index}
+                  totalDays={program.days.length}
+                  exerciseLibrary={exerciseLibrary}
+                  onChange={(nextDay) => updateDay(index, nextDay)}
+                  onMove={moveDay}
+                  onRemove={removeDay}
+                />
+              ))}
+            </div>
+          )}
+
+          {step === 4 && (
+            <div className="builder-card builder-review">
+              <div className="review-program-heading">
+                <div>
+                  <span>Program</span>
+                  <h3>{program.name}</h3>
+                  {program.description && <p>{program.description}</p>}
+                </div>
+                <strong>{program.days.filter((day) => !day.is_rest_day).length} workouts</strong>
+              </div>
+
+              <div className="review-days">
+                {program.days.map((day) => (
+                  <div key={day.localId || day.id}>
+                    <div>
+                      <strong>{day.name}</strong>
+                      <span>{day.day_of_week === 'flexible' ? 'Flexible' : day.day_of_week}</span>
+                    </div>
+                    <span>{day.is_rest_day ? 'Rest' : `${day.exercises.length} exercises`}</span>
+                  </div>
+                ))}
+              </div>
+
+              <label className="switch-row review-active-switch">
+                <span>
+                  <strong>Make this my active program</strong>
+                  <small>PRime will use it on Home and Workout.</small>
+                </span>
+                <input
+                  type="checkbox"
+                  checked={program.is_active}
+                  onChange={(event) => setProgram((current) => ({ ...current, is_active: event.target.checked }))}
+                />
+              </label>
+            </div>
+          )}
+        </section>
 
         <div className="builder-save-bar">
-          {step > 1 ? <button className="button button-secondary" type="button" onClick={() => setStep((current) => current - 1)}>Back</button> : <span />}
-          {step < 4 ? <button className="button button-primary" type="button" onClick={nextStep}>Next</button> : <button className="button button-primary" type="button" onClick={saveProgram} disabled={saving}>{saving ? 'Saving...' : 'Save Program'}</button>}
+          {step > 1 ? (
+            <button className="button button-secondary" type="button" onClick={previousStep}>
+              <ArrowLeft size={18} /> Back
+            </button>
+          ) : (
+            <span />
+          )}
+
+          {step < 4 ? (
+            <button className="button button-primary" type="button" onClick={nextStep}>
+              Continue <ArrowRight size={18} />
+            </button>
+          ) : (
+            <button className="button button-primary" type="button" onClick={saveProgram} disabled={saving}>
+              {saving ? 'Saving...' : editing ? 'Save changes' : 'Create program'}
+            </button>
+          )}
         </div>
       </form>
     </main>

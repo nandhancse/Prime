@@ -39,8 +39,8 @@ function GoogleLoginButton({ onError }) {
     setBusy(true)
     onErrorRef.current('')
     try {
-      await loginWithGoogle(credential)
-      navigate('/dashboard', { replace: true })
+      const profile = await loginWithGoogle(credential)
+      navigate(profile.onboarding_completed ? '/dashboard' : '/onboarding', { replace: true })
     } catch (error) {
       onErrorRef.current(getApiErrors(error, 'Google login failed. Please try again.').form)
     } finally {

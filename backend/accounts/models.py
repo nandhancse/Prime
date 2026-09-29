@@ -26,6 +26,14 @@ class UserProfile(models.Model):
         KILOGRAMS = 'kg', 'Kilograms'
         POUNDS = 'lb', 'Pounds'
 
+    class TrainingSplit(models.TextChoices):
+        NONE = 'none', 'No current split'
+        PUSH_PULL_LEGS = 'push_pull_legs', 'Push / Pull / Legs'
+        UPPER_LOWER = 'upper_lower', 'Upper / Lower'
+        FULL_BODY = 'full_body', 'Full Body'
+        BRO_SPLIT = 'bro_split', 'Body-part split'
+        CUSTOM = 'custom', 'Custom'
+
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -62,6 +70,13 @@ class UserProfile(models.Model):
         default=3,
         validators=[MinValueValidator(1), MaxValueValidator(14)],
     )
+    current_training_split = models.CharField(
+        max_length=24,
+        choices=TrainingSplit.choices,
+        default=TrainingSplit.NONE,
+    )
+    custom_training_split = models.CharField(max_length=120, blank=True)
+    onboarding_completed = models.BooleanField(default=False)
     preferred_weight_unit = models.CharField(
         max_length=2,
         choices=WeightUnit.choices,

@@ -96,8 +96,8 @@ export function AuthProvider({ children }) {
   }, [establishSession])
 
   const register = useCallback(async (accountData) => {
-    return registerAccount(accountData)
-  }, [])
+    return establishSession(await registerAccount(accountData))
+  }, [establishSession])
 
   const updateUser = useCallback((profile) => {
     setUser(profile)

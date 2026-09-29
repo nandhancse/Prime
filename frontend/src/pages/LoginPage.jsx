@@ -7,6 +7,8 @@ import { useAuth } from '../context/useAuth.js'
 import '../styles/auth.css'
 
 
+const googleEnabled = Boolean(import.meta.env.VITE_GOOGLE_CLIENT_ID?.trim())
+
 function LoginPage() {
   const [formData, setFormData] = useState({ username: '', password: '' })
   const [errors, setErrors] = useState({})
@@ -41,12 +43,12 @@ function LoginPage() {
     setErrors({})
 
     try {
-      await login({
+      const profile = await login({
         username: formData.username.trim(),
         password: formData.password,
       })
       const destination = location.state?.from?.pathname || '/dashboard'
-      navigate(destination, { replace: true })
+      navigate(profile.onboarding_completed ? destination : '/onboarding', { replace: true })
     } catch (error) {
       setErrors(getApiErrors(error, 'Unable to log in. Please try again.'))
     } finally {
@@ -58,8 +60,16 @@ function LoginPage() {
     <div className="auth-page">
       <main className="auth-main">
         <section className="auth-card" aria-labelledby="login-heading">
-          <Link className="auth-brand" to="/">PRime</Link>
-          <h1 className="auth-title" id="login-heading">Welcome back</h1>
+          <Link className="auth-brand" to="/" aria-label="PRime home">
+            <span className="auth-brand-mark" aria-hidden="true">P</span>
+            <span>PRime</span>
+          </Link>
+
+          <div className="auth-copy">
+            <p className="auth-kicker">Welcome back</p>
+            <h1 className="auth-title" id="login-heading">Ready when you are.</h1>
+            <p className="auth-subtitle">Sign in and continue your training.</p>
+          </div>
 
           {location.state?.message && (
             <p className="form-message success" role="status">{location.state.message}</p>
@@ -78,6 +88,7 @@ function LoginPage() {
               onChange={handleChange}
               error={errors.username}
               autoComplete="username"
+              autoCapitalize="none"
               required
             />
             <FormInput
@@ -93,15 +104,19 @@ function LoginPage() {
             />
 
             <button className="button button-primary form-submit" type="submit" disabled={submitting}>
-              {submitting ? 'Logging in...' : errors.retry ? 'Retry' : 'Login'}
+              {submitting ? 'Signing in...' : errors.retry ? 'Retry' : 'Sign in'}
             </button>
           </form>
 
-          <div className="auth-divider"><span>OR</span></div>
-          <GoogleLoginButton onError={(message) => setErrors((current) => ({ ...current, form: message }))} />
+          {googleEnabled && (
+            <div className="auth-social">
+              <div className="auth-divider"><span>or</span></div>
+              <GoogleLoginButton onError={(message) => setErrors((current) => ({ ...current, form: message }))} />
+            </div>
+          )}
 
           <p className="auth-switch">
-            <Link to="/register">Create account</Link>
+            New to PRime? <Link to="/register">Create an account</Link>
           </p>
         </section>
       </main>

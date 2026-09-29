@@ -56,6 +56,10 @@ class AuthenticationTests(APITestCase):
         self.assertNotIn('password', response.data)
         self.assertNotIn('password', response.data['user'])
         self.assertNotIn('confirm_password', response.data['user'])
+        self.assertIn('access', response.data)
+        self.assertIn('refresh', response.data)
+        profile = UserProfile.objects.get(user__username='auth_test_user')
+        self.assertFalse(profile.onboarding_completed)
 
     def test_duplicate_username_is_rejected_case_insensitively(self):
         self.create_user()
@@ -155,6 +159,45 @@ class AuthenticationTests(APITestCase):
         profile = UserProfile.objects.get(user=user)
         self.assertEqual(profile.display_name, 'Test Athlete')
         self.assertEqual(profile.weekly_workout_target, 4)
+
+    def test_onboarding_profile_can_be_completed(self):
+        user = self.create_user()
+        self.client.force_authenticate(user)
+
+        response = self.client.patch(
+            self.profile_url,
+            {
+                'display_name': 'Test Athlete',
+                'height_cm': '178.5',
+                'current_weight_kg': '82.2',
+                'training_experience': 'intermediate',
+                'primary_fitness_goal': 'strength',
+                'weekly_workout_target': 4,
+                'current_training_split': 'upper_lower',
+                'onboarding_completed': True,
+            },
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(response.data['onboarding_completed'])
+        self.assertEqual(response.data['current_training_split'], 'upper_lower')
+
+    def test_custom_split_requires_a_name(self):
+        user = self.create_user()
+        self.client.force_authenticate(user)
+
+        response = self.client.patch(
+            self.profile_url,
+            {
+                'current_training_split': 'custom',
+                'custom_training_split': '',
+            },
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('custom_training_split', response.data)
 
     def test_profile_rejects_unreasonable_numeric_values(self):
         user = self.create_user()

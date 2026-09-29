@@ -1,0 +1,131 @@
+name: Build PRime v1.0.0 APK
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/android-release.yml"
+      - "frontend/**"
+      - "backend/**"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v5
+
+      - name: Set up Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Set up Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: gradle
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Build production web bundle and sync Android
+        working-directory: frontend
+        env:
+          VITE_API_BASE_URL: https://backend-production-fa614.up.railway.app/api/
+          VITE_GOOGLE_CLIENT_ID: 891721708902-8e7d4r9jvfipncpm80o5jtgpfri6dhsj.apps.googleusercontent.com
+        run: |
+          npm run build
+          npx cap sync android
+
+      - name: Generate PRime release signing key
+        id: signing
+        working-directory: frontend/android
+        shell: bash
+        run: |
+          set -euo pipefail
+          STORE_PASS="$(openssl rand -hex 24)"
+          KEY_PASS="$(openssl rand -hex 24)"
+          KEY_ALIAS="prime"
+          keytool -genkeypair -v             -keystore prime-release-key.jks             -storepass "$STORE_PASS"             -keypass "$KEY_PASS"             -keyalg RSA             -keysize 2048             -validity 10000             -alias "$KEY_ALIAS"             -dname "CN=PRime, OU=PRime, O=PRime, L=Kottayam, ST=Kerala, C=IN"
+
+          cat > key.properties <<EOF
+          storeFile=prime-release-key.jks
+          storePassword=$STORE_PASS
+          keyAlias=$KEY_ALIAS
+          keyPassword=$KEY_PASS
+          EOF
+
+          SHA1="$(keytool -list -v -keystore prime-release-key.jks -storepass "$STORE_PASS" -alias "$KEY_ALIAS" | awk -F'SHA1: ' '/SHA1:/{print $2; exit}')"
+
+          cat > PRIME_SIGNING_BACKUP.txt <<EOF
+          PRime Android release signing backup
+          ====================================
+          Key alias: $KEY_ALIAS
+          Keystore password: $STORE_PASS
+          Key password: $KEY_PASS
+          Release SHA-1: $SHA1
+
+          KEEP prime-release-key.jks AND THIS FILE PRIVATE.
+          You need the same signing key for future PRime APK updates.
+          EOF
+
+          echo "sha1=$SHA1" >> "$GITHUB_OUTPUT"
+          echo "### PRime release SHA-1" >> "$GITHUB_STEP_SUMMARY"
+          echo "`$SHA1`" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "Create an additional Android OAuth client for package `com.prime.workout` using this SHA-1." >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Build signed release APK
+        working-directory: frontend/android
+        run: ./gradlew assembleRelease
+
+      - name: Verify APK signature
+        working-directory: frontend/android
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK="app/build/outputs/apk/release/app-release.apk"
+          "$ANDROID_HOME/build-tools/$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -1)/apksigner" verify --verbose --print-certs "$APK"
+          cp "$APK" PRime.apk
+          sha256sum PRime.apk | tee PRime.apk.sha256
+
+      - name: Upload release signing backup
+        uses: actions/upload-artifact@v4
+        with:
+          name: PRIME-RELEASE-SIGNING-BACKUP-KEEP-PRIVATE
+          path: |
+            frontend/android/prime-release-key.jks
+            frontend/android/PRIME_SIGNING_BACKUP.txt
+          retention-days: 30
+
+      - name: Upload APK build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: PRime-v1.0.0
+          path: |
+            frontend/android/PRime.apk
+            frontend/android/PRime.apk.sha256
+
+      - name: Publish GitHub Release
+        working-directory: frontend/android
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if gh release view v1.0.0 >/dev/null 2>&1; then
+            gh release upload v1.0.0 PRime.apk PRime.apk.sha256 --clobber
+          else
+            gh release create v1.0.0               PRime.apk               PRime.apk.sha256               --target "$GITHUB_SHA"               --title "PRime v1.0.0"               --notes "First production GitHub APK release of PRime. Includes the redesigned mobile frontend, first-run onboarding, Railway production backend integration, Google sign-in support, and final PRime branding."
+          fi

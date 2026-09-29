@@ -3,7 +3,7 @@ import { useAuth } from '../context/useAuth.js'
 
 
 function ProtectedRoute({ children }) {
-  const { isAuthenticated, loading } = useAuth()
+  const { isAuthenticated, loading, user } = useAuth()
   const location = useLocation()
 
   if (loading) {
@@ -17,6 +17,10 @@ function ProtectedRoute({ children }) {
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace state={{ from: location }} />
+  }
+
+  if (!user?.onboarding_completed && location.pathname !== '/onboarding') {
+    return <Navigate to="/onboarding" replace />
   }
 
   return children

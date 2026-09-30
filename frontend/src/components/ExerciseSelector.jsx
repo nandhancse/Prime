@@ -18,10 +18,10 @@ function ExerciseSelector({ exercises, excludedIds = [], onSelect }) {
         <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Type an exercise name" />
       </label>
       <div className="selector-results">
-        {filtered.slice(0, 12).map((exercise) => (
+        {filtered.map((exercise) => (
           <button key={exercise.id} type="button" onClick={() => onSelect(exercise)}>
             <strong>{exercise.name}</strong>
-            <span>{exercise.primary_muscle.name} · {exercise.equipment.name}</span>
+            <span>{exercise.primary_muscle?.name || 'Muscle'} · {exercise.equipment?.name || 'Equipment'}</span>
           </button>
         ))}
         {filtered.length === 0 && <p>No matching exercises available.</p>}

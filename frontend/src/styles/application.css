@@ -1505,3 +1505,119 @@ textarea:focus {
     grid-template-columns: 1fr;
   }
 }
+
+
+/* Program exercise assignment */
+.program-exercise-step {
+  display: grid;
+  gap: 1rem;
+}
+
+.workout-day-tabs {
+  display: flex;
+  gap: .55rem;
+  overflow-x: auto;
+  padding: .1rem 0 .35rem;
+  scrollbar-width: none;
+}
+
+.workout-day-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.workout-day-tabs button {
+  flex: 0 0 auto;
+  min-width: 118px;
+  min-height: 58px;
+  display: grid;
+  gap: .2rem;
+  padding: .7rem .8rem;
+  border: 1px solid var(--border);
+  border-radius: .9rem;
+  color: var(--text-primary);
+  background: var(--surface);
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+
+.workout-day-tabs button.active {
+  border-color: rgba(197, 255, 66, .58);
+  background: rgba(197, 255, 66, .07);
+}
+
+.workout-day-tabs button span {
+  font-size: .78rem;
+  font-weight: 800;
+}
+
+.workout-day-tabs button small {
+  color: var(--text-muted);
+  font-size: .65rem;
+}
+
+.workout-day-tabs button.active small {
+  color: var(--accent);
+}
+
+.selector-panel-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: .75rem;
+  margin-bottom: .75rem;
+}
+
+.selector-panel-heading > div {
+  display: grid;
+  gap: .2rem;
+}
+
+.selector-panel-heading strong {
+  font-size: .84rem;
+}
+
+.selector-panel-heading span {
+  color: var(--text-muted);
+  font-size: .69rem;
+  line-height: 1.4;
+}
+
+.day-step-navigation {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: .65rem;
+}
+
+.day-step-navigation > span {
+  color: var(--text-muted);
+  font-size: .72rem;
+  font-weight: 750;
+  text-align: center;
+}
+
+.day-step-navigation .button:last-child {
+  justify-self: end;
+}
+
+@media (max-width: 560px) {
+  .program-day-heading .reorder-actions {
+    display: none;
+  }
+
+  .exercise-target-grid {
+    grid-template-columns: repeat(3, minmax(72px, 1fr));
+    overflow-x: auto;
+  }
+
+  .selector-results {
+    max-height: 52dvh;
+  }
+
+  .day-step-navigation .button {
+    min-height: 44px;
+    padding-inline: .65rem;
+    font-size: .72rem;
+  }
+}

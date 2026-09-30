@@ -1,13 +1,6 @@
 name: Build PRime v1.0.0 APK
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - ".github/workflows/android-release.yml"
-      - "frontend/**"
-      - "backend/**"
   workflow_dispatch:
 
 permissions:

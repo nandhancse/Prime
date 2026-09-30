@@ -24,7 +24,6 @@ function ProgramDayCard({ day, index, totalDays, exerciseLibrary, onChange, onMo
         },
       ],
     })
-    setSelectorOpen(false)
   }
 
   function updateExercise(exerciseIndex, field, value) {
@@ -101,11 +100,21 @@ function ProgramDayCard({ day, index, totalDays, exerciseLibrary, onChange, onMo
 
           {selectorOpen ? (
             <div className="selector-panel">
-              <ExerciseSelector exercises={exerciseLibrary} excludedIds={day.exercises.map((item) => item.exercise_id)} onSelect={addExercise} />
-              <button className="text-button" type="button" onClick={() => setSelectorOpen(false)}>Close selector</button>
+              <div className="selector-panel-heading">
+                <div>
+                  <strong>Add exercises to {day.name || `Day ${index + 1}`}</strong>
+                  <span>Tap as many exercises as you want. They are added immediately.</span>
+                </div>
+                <button className="text-button" type="button" onClick={() => setSelectorOpen(false)}>Done</button>
+              </div>
+              <ExerciseSelector
+                exercises={exerciseLibrary}
+                excludedIds={day.exercises.map((item) => item.exercise_id)}
+                onSelect={addExercise}
+              />
             </div>
           ) : (
-            <button className="add-block-button" type="button" onClick={() => setSelectorOpen(true)}>+ Add exercise</button>
+            <button className="add-block-button" type="button" onClick={() => setSelectorOpen(true)}>+ Add exercises to {day.name || `Day ${index + 1}`}</button>
           )}
         </div>
       )}

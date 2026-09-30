@@ -64,6 +64,7 @@ function ProgramBuilderPage() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [step, setStep] = useState(1)
+  const [activeDayIndex, setActiveDayIndex] = useState(0)
   const navigate = useNavigate()
   const currentStep = steps[step - 1]
 
@@ -388,19 +389,55 @@ function ProgramBuilderPage() {
           )}
 
           {step === 3 && (
-            <div className="program-days-stack">
-              {program.days.map((day, index) => (
+            <div className="program-exercise-step">
+              <div className="workout-day-tabs" role="tablist" aria-label="Workout days">
+                {program.days.map((day, index) => (
+                  <button
+                    className={activeDayIndex === index ? 'active' : ''}
+                    type="button"
+                    role="tab"
+                    aria-selected={activeDayIndex === index}
+                    key={day.localId || day.id}
+                    onClick={() => setActiveDayIndex(index)}
+                  >
+                    <span>{day.name || `Day ${index + 1}`}</span>
+                    <small>{day.is_rest_day ? 'Rest' : `${day.exercises.length} exercises`}</small>
+                  </button>
+                ))}
+              </div>
+
+              {program.days[activeDayIndex] && (
                 <ProgramDayCard
-                  key={day.localId || day.id}
-                  day={day}
-                  index={index}
+                  key={program.days[activeDayIndex].localId || program.days[activeDayIndex].id}
+                  day={program.days[activeDayIndex]}
+                  index={activeDayIndex}
                   totalDays={program.days.length}
                   exerciseLibrary={exerciseLibrary}
-                  onChange={(nextDay) => updateDay(index, nextDay)}
+                  onChange={(nextDay) => updateDay(activeDayIndex, nextDay)}
                   onMove={moveDay}
                   onRemove={removeDay}
                 />
-              ))}
+              )}
+
+              <div className="day-step-navigation">
+                <button
+                  className="button button-secondary"
+                  type="button"
+                  disabled={activeDayIndex === 0}
+                  onClick={() => setActiveDayIndex((current) => current - 1)}
+                >
+                  Previous day
+                </button>
+                <span>{activeDayIndex + 1} / {program.days.length}</span>
+                <button
+                  className="button button-secondary"
+                  type="button"
+                  disabled={activeDayIndex === program.days.length - 1}
+                  onClick={() => setActiveDayIndex((current) => current + 1)}
+                >
+                  Next day
+                </button>
+              </div>
             </div>
           )}
 

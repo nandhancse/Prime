@@ -1,10 +1,16 @@
 name: Build PRime v1.0.0 APK
 
 on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/android-release.yml"
   workflow_dispatch:
 
 permissions:
   contents: write
+  actions: read
 
 jobs:
   release:
@@ -41,16 +47,25 @@ jobs:
           npm run build
           npx cap sync android
 
-      - name: Generate PRime release signing key
-        id: signing
+      - name: Restore permanent PRime release signing key
         working-directory: frontend/android
+        env:
+          GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
           set -euo pipefail
-          STORE_PASS="$(openssl rand -hex 24)"
-          KEY_PASS="$STORE_PASS"
-          KEY_ALIAS="prime"
-          keytool -genkeypair -v             -keystore prime-release-key.jks             -storepass "$STORE_PASS"             -keypass "$KEY_PASS"             -keyalg RSA             -keysize 2048             -validity 10000             -alias "$KEY_ALIAS"             -dname "CN=PRime, OU=PRime, O=PRime, L=Kottayam, ST=Kerala, C=IN"
+          rm -rf signing-backup
+          gh run download 36535598269             --repo "${{ github.repository }}"             --name PRIME-RELEASE-SIGNING-BACKUP-KEEP-PRIVATE             --dir signing-backup
+
+          cp signing-backup/prime-release-key.jks prime-release-key.jks
+
+          STORE_PASS="$(sed -n 's/^Keystore password: //p' signing-backup/PRIME_SIGNING_BACKUP.txt | head -1)"
+          KEY_PASS="$(sed -n 's/^Key password: //p' signing-backup/PRIME_SIGNING_BACKUP.txt | head -1)"
+          KEY_ALIAS="$(sed -n 's/^Key alias: //p' signing-backup/PRIME_SIGNING_BACKUP.txt | head -1)"
+
+          test -n "$STORE_PASS"
+          test -n "$KEY_PASS"
+          test -n "$KEY_ALIAS"
 
           cat > key.properties <<EOF
           storeFile=prime-release-key.jks
@@ -59,50 +74,23 @@ jobs:
           keyPassword=$KEY_PASS
           EOF
 
-          SHA1="$(keytool -list -v -keystore prime-release-key.jks -storepass "$STORE_PASS" -alias "$KEY_ALIAS" | awk -F'SHA1: ' '/SHA1:/{print $2; exit}')"
-
-          cat > PRIME_SIGNING_BACKUP.txt <<EOF
-          PRime Android release signing backup
-          ====================================
-          Key alias: $KEY_ALIAS
-          Keystore password: $STORE_PASS
-          Key password: $KEY_PASS
-          Release SHA-1: $SHA1
-
-          KEEP prime-release-key.jks AND THIS FILE PRIVATE.
-          You need the same signing key for future PRime APK updates.
-          EOF
-
-          echo "sha1=$SHA1" >> "$GITHUB_OUTPUT"
-          echo "### PRime release SHA-1" >> "$GITHUB_STEP_SUMMARY"
-          echo "`$SHA1`" >> "$GITHUB_STEP_SUMMARY"
-          echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "Create an additional Android OAuth client for package `com.prime.workout` using this SHA-1." >> "$GITHUB_STEP_SUMMARY"
-
       - name: Build signed release APK
         working-directory: frontend/android
         run: |
           chmod +x gradlew
           ./gradlew assembleRelease
 
-      - name: Verify APK signature
+      - name: Verify permanent release signature
         working-directory: frontend/android
         shell: bash
         run: |
           set -euo pipefail
           APK="app/build/outputs/apk/release/app-release.apk"
-          "$ANDROID_HOME/build-tools/$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -1)/apksigner" verify --verbose --print-certs "$APK"
+          APKSIGNER="$ANDROID_HOME/build-tools/$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -1)/apksigner"
+          "$APKSIGNER" verify --verbose --print-certs "$APK" | tee signature.txt
+          grep -qi "certificate SHA-1 digest: 0d7cf439cb60f639fc8a675ba1a6193f2f846222" signature.txt
           cp "$APK" PRime.apk
           sha256sum PRime.apk | tee PRime.apk.sha256
-
-      - name: Upload release signing backup
-        uses: actions/upload-artifact@v4
-        with:
-          name: PRIME-RELEASE-SIGNING-BACKUP-KEEP-PRIVATE
-          path: |
-            frontend/android/prime-release-key.jks
-            frontend/android/PRIME_SIGNING_BACKUP.txt
-          retention-days: 30
 
       - name: Upload APK build artifact
         uses: actions/upload-artifact@v4
@@ -119,8 +107,4 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if gh release view v1.0.0 >/dev/null 2>&1; then
-            gh release upload v1.0.0 PRime.apk PRime.apk.sha256 --clobber
-          else
-            gh release create v1.0.0               PRime.apk               PRime.apk.sha256               --target "$GITHUB_SHA"               --title "PRime v1.0.0"               --notes "First production GitHub APK release of PRime. Includes the redesigned mobile frontend, first-run onboarding, Railway production backend integration, Google sign-in support, and final PRime branding."
-          fi
+          gh release upload v1.0.0 PRime.apk PRime.apk.sha256 --clobber
